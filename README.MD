@@ -1,59 +1,62 @@
 # Webpack tutorial
 
-## 2. Сервер разработки Webpack и Hot Module Reloading (HMR)
+## 2. Babel
 
-### 1) Установка Webpack Dev Server:
-
-```
-npm install --save-dev webpack-dev-server
-```
-
-### 1.1) Установка плагина HtmlWebpackPlugin:
+### 1) Установка Babel:
 
 ```
-npm install --save-dev webpack-dev-server
+npm install --save-dev babel-loader @babel/core
 ```
 
-Этот плагин будет автоматически генерировать html.
-
-_Понадобится для того что бы сервер что-то возвращал._
+_Это_ ``Babel-загрузчик`` _и_ ``Babel/Core``
 
 ### 2) Настройка конфига:
 
-```javascript
-const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
+Нужно сделать так что бы каждый файл с расширением ``.js`` проходил через ``Babel-загрузчик``:
 
-module.exports = {
-  mode: 'development',
-  entry: './src/index.js',
-  // Сообщяем серверу откуда сервить файлы, не собитая в ./dist.
-  // Работает только со свойством static. Свойство contentBase - выдает ошибку.
-  devServer: {
-    static: './dist',
+```javascript
+  module: {
+    rules: [
+      {
+        test: /\.m?js$/, // Когда мы сталкиваемся с .mjs/.js файлом...
+        exclude: /node_modules/, // Исключаем файлы из node.modules
+        use: {
+          loader: "babel-loader", // Пропускаем его через babel-загрузчик
+          options: {
+            // Существует целый набор сконфигурированых плагинов. Прессеты
+            presets: ['@babel/preset-env'], // Требутеся установить
+            // Сюда можно доустановить доп. плагины к прессету. Обойдемся собраным прессетом.
+            plugins: [...],
+           }
+        }
+      }
+    ]
   },
-  // Здесь массив плагинов. Всегда используем инстанс.
-  // Почему-то js файл подключился к html, в херед автоматически.
-  plugins: [
-    new HtmlWebpackPlugin({
-      title: 'Development',
-    })
-  ],
-  output: {
-    filename: 'bundle.js',
-    path: path.resolve(__dirname, 'dist'),
-  },
-};
 ```
 
-### 3) Создаем скрипт для разработки:
+### 3) Создание файла конфигурации babel.config.json:
+
+Установим файл с набором инстукций для Babel. Он позволяем настраивать транспиляцию под отпределенный стандарт:
+```
+npm install @babel/preset-env --save-dev
+```
+
+Далее создаем в рабочей директории файл ``.babelrc,`` со следующим содержанием:
 
 ```json
-"scripts": {
-   // Запуск сервера с автоматическим открытием в браузере
-  "dev": "webpack-dev-server --open",
-  "build": "webpack"
-},
+{
+  "presets": ["@babel/preset-env"]
+}
 ```
 
-Теперь при запуске скрипта у нас запускается сервер и поддерживается Hot Reloading.
+### 4) Открытые вопросы:
+
+Почему в прессеты указываются в двух местах?
+
+Можно ли оставить в однм месте?
+
+Как работает babel.config.json?
+
+Чем он отличается от .bebelrc и других рассширений?
+
+_Оставлю прессет в файле конфигурации Webpack_
