@@ -1,71 +1,128 @@
 # Webpack tutorial
 
-## 2. CSS и SCSS Loaders
+## 2. Post Css и Mini Css Extract Plugin
 
-### 1) Установка загрузчиков:
-
-```
-npm install --save-dev style-loader css-loader
-```
-
-_В чем их отличие? Что например делает_ ``css-loader``_?_
-
-
-### 1.1) Также установим загрузчик Sass-Loader и библиотеку Sass:
+### 1) Установка загрузчика:
 
 ```
-npm install --save-dev sass-loader sass
+npm install --save-dev postcss-loader
 ```
 
-``sass-loader`` _требует что бы мы установили библиотеку_ ``sass``.
+### 2) Установка postCss-библиотек:
 
+_В примере использовались другие библиотеки, но этими я чаще пользуюсь._
 
-### 2) Обновляем правила в конфигурационном файле Webpack:
+```
+npm install -D tailwindcss postcss autoprefixer
+```
+
+### 3) Установка Mini Css Extract Plugin:
+
+```
+npm install --save-dev mini-css-extract-plugin
+```
+
+_Как я понял, этот плагин извлекает css из js и помещает его к бандлу как .css файл_.
+
+### 4) Настройка конфигурации загрузчика:
 
 ```javascript
-  module: {
-    rules: [
+{
+  test: /\.scss$/i,
+  use: [
+    {
+      loader: MiniCssExrtactPlugin.loader,
+      options: {
+        // ... Всякие оптимизационные моменты ...
+      }
+    },
+    // Теперь нам не нужен style-loader
+    //'style-loader',
+    'css-loader',
+    // Так же добавляем postcss-загрузчик
+    'postcss-loader',
+    'sass-loader',
+   ]
+}
+```
+
+_Здесь так же важен порядок расположения загрузчиков._
+
+_Следует обратить внимение что первый загрузчик здесь_ `MiniCssExtractPlugin.Loader`
+
+### 4.1) Подключение самого плагина:
+
+```javascript
+plugins: [
+  new HtmlWebpackPlugin({
+    title: 'Development',
+  }),
+  new MiniCssExrtactPlugin({
+    // Имя для css-файла которое будет передаватся из исходника
+    filename: '[name].css',
+  })
+]
+```
+
+### 5) Конфигурация postcss.config.js:
+
+_Конфигурацию можно не писать в отдельном файле, а добавить напрямую в_ `webpack.config.js`:
+
+```javascript
+rules: [
+  {
+    test: /\.css$/i,
+    use: [
+      'style-loader',
+      'css-loader',
       {
-        ...
-      },
-      {
-        test: /\.scss$/i,
-        // Порядок загрузчиков важен
-        use: [
-          'style-loader', // 3. А вот это хз что
-          'css-loader', // 2. Потом css в стили
-          'sass-loader', // 1. Сначала обрабатываем sass в css
-        ]
+        loader: 'postcss-loader',
+        options: {
+          postcssOptions: {
+            plugins: [
+              [
+                // "postcss-preset-env", хз что это
+                'tailwindcss',
+                'autoprefixer',
+              ],
+            ],
+          },
+        },
       },
     ],
   },
+];
 ```
+_Вроде бы так... Неуверен..._
 
-### 3) Используем scss-стили:
-
-Создадим ``./srs/styles/main.scss`` со сделующим содержимым:
-
-```scss
-// Переменная
-$body-color: red;
-
-body {
-  // Используем переменную
-  background-color: $body-color;
-}
-```
-Далее нужно подключить ``scss-файл`` к ``index.js``. Все должно проходить через ``index.js``, потому как это ``entry-point`` указанный в Webpack.
+Но мы сделаем с конфигурационным файлом `postcss.config.js`:
 
 ```javascript
-// index.js
-import './styles/main.scss';
-// ... Какой-то код ...
+// postcss.config.js
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};
 ```
 
-### 4) Открытые вопросы:
+### 6) Также нам понадобится .browserlistrc для автопрефиксера и прочего:
 
-Что делает ``style-loader``?
+```
+last 2 years
+> 1%
+not dead
+```
 
-Почему стили даже после билда хранятся в теге ``<style>``?
+_Нужно для autoprefixer, stylelint, babel-preset-env и cssnext, что бы разработчик мог разом указать список браузеров, которые нужно поддерживать в проекте._
 
-Как получить отдельный ``css-файл`` в бандл?
+
+### 7) Открытые вопросы:
+
+Borwserslistrc считывается автоматически?
+
+Где для него взять стандарный конфиг?
+
+Как подключить `nano-css`?
+
