@@ -6,6 +6,7 @@ $body-color: red;
 
 body {
   display: grid;
+  min-height: 100vh;
   transition: all 0.5s;
   user-select: none;
   background: linear-gradient(to bottom, white, black);
