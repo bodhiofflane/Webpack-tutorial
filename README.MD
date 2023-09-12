@@ -1,6 +1,6 @@
 # Webpack tutorial
 
-## 2. Babel
+## 4. Babel
 
 ### 1) Установка Babel:
 
