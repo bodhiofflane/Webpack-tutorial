@@ -1,6 +1,6 @@
 # Webpack tutorial
 
-## 2. Сервер разработки Webpack и Hot Module Reloading (HMR)
+## 3. Сервер разработки Webpack и Hot Module Reloading (HMR)
 
 ### 1) Установка Webpack Dev Server:
 
