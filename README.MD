@@ -1,6 +1,6 @@
 # Webpack tutorial
 
-## 2. Post Css и Mini Css Extract Plugin
+## 6. Post Css и Mini Css Extract Plugin
 
 ### 1) Установка загрузчика:
 
