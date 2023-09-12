@@ -1,6 +1,6 @@
 # Webpack tutorial
 
-## 2. CSS и SCSS Loaders
+## 5. CSS и SCSS Loaders
 
 ### 1) Установка загрузчиков:
 
