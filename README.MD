@@ -1,119 +1,80 @@
 # Webpack tutorial
 
-## 8. Общая конфигурация
+## 9. Code Splitting
 
-### 1) Установка модуля для слияния кофигов:
+Есть несколько вариантов разделение кода. Самый простой это - `Entry Point`.
 
-В первую очередь нам нужно установить модуль `webpack-merge`:
+Мы рассмотрим `Prevent Duplication`. Его суть в том что если у нас несколько точек входа из `.js`, то сторонюю библиотеку которую мы используем в точке, мы выносим в отдельный `chunk`. Это предотвращает подтягивание сторонней библиотеки в каждый `.js` файл.
 
-```
-npm install --save-dev webpack-merge
-```
+### 1) Создаем новый Entry:
 
-### 2) Создание webpack.common.js:
+Создаем `./src/js`, перемещаем туда наш `index.js` и создаем внутри `sum.js`.
 
-Нужно создать файл `webpack.common.js` с общим для `dev` и `prod` содержимым:
+### 2) Подключаем Entries в webpack.common.js:
 
 ```javascript
-const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-
 module.exports = {
-  entry: './src/index.js',
-  module: {
-    rules: [
-      // Общий конгфик для модов разработки
-      {
-        test: /\.m?js$/,
-        exclude: /node_modules/,
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: ['@babel/preset-env'],
-          },
-        },
-      },
-    ],
+  entry: {
+    // Указываем зависимости
+    index: {import: './src/js/index.js', dependOn: 'shared'},
+    sum: {import: './src/js/sum.js', dependOn: 'shared'},
+    shared: 'lodash', // <- Это имя библиотеки?
   },
-  plugins: [
-    // Общий для модов разработки
-    new HtmlWebpackPlugin(),
-  ],
+  // ...
+}
+```
+
+_Документация советует не делать несколько точек входа а использовать импорты.... Уточнить._
+
+### 3) Указываем Webpack что код нужно разделить на чанки:
+
+```javascript
+  // ...
   output: {
-    filename: 'bundle.js',
+    // Указываем что .js файлы будут иметь такое именование
+    filename: '[name].bundle.js',
     path: path.resolve(__dirname, 'dist'),
   },
-};
+  optimization: {
+    // Хз что это и зачем. В доке 0 пояснений. В сборке нет разницы... вроде бы
+    // runtimeChunk: 'single',
+    //  Вот эта часть сообщает Webpack что код нужно разделить на части, основываясь на конфигурации в свойстве entry
+    splitChinks: {
+      chunks: 'all'
+    }
+  }
+  // ...
 ```
-_Здесь не используется_ `mode` _, не обрабатываются стили и убран_ `title` _из плагина генерирующего_ `html`.
 
-### 3) Изменение webpack.dev.js:
+### 4) Установим библиотеку Lodash для примера:
 
-Здесь нам наоборот, нужно удалить общие настройки конфигурации и указать только уникальные на `dev` режима.
+```bash
+npm i lodash
+```
 
-Также следует импорировать модуль `webpack-merge` и `webpack.common.js`.
+В `index.js`:
 
 ```javascript
-const { merge } = require('webpack-merge');
-const common = require('./webpack.common');
+import _ from 'lodash';
+import '../styles/main.scss';
 
-module.exports = merge(common, {
-  mode: 'development',
-  devtool: 'inline-source-map',
-  devServer: {
-    static: './dist',
-  },
-  module: {
-    rules: [
-      {
-        test: /\.scss$/i,
-        use: [
-          'style-loader',
-          { loader: 'css-loader', options: { sourceMap: true } },
-          { loader: 'postcss-loader', options: { sourceMap: true } },
-          { loader: 'sass-loader', options: { sourceMap: true } },
-        ],
-      },
-    ],
-  },
-});
-
+console.log(_.join(['index', 'module', 'loaded'], ' '));
 ```
 
-_Здесь мы удалили все общие конфигурации и оставили только те, которые отноятся к_ `dev` _режиму._
-
-_Также мы обернули импортируемый объект в вызов функции_ `merge`.
-
-### 4) Изменение webpack.prod.js:
+В `sum.js`:
 
 ```javascript
-const { merge } = require('webpack-merge');
-const common = require('./webpack.common');
-const MiniCssExrtactPlugin = require('mini-css-extract-plugin');
+import _ from 'lodash';
 
-module.exports = merge(common, {
-  mode: 'production',
-  module: {
-    rules: [
-      {
-        test: /\.scss$/i,
-        use: [
-          {
-            loader: MiniCssExrtactPlugin.loader,
-          },
-          'css-loader',
-          'postcss-loader',
-          'sass-loader',
-        ],
-      },
-    ],
-  },
-  plugins: [
-    new MiniCssExrtactPlugin({
-      filename: '[name].css',
-    }),
-  ],
-});
+console.log(_.join(['sum', 'module', 'loaded'], ' '));
 ```
 
-_Здесь абсолютно такая же история. Оставили только то, что уникально для режима_ `production`. _А именно обработку css._
+### 5) Сборка проекта:
+
+В итоге у нас появляется `index.bundle.js`, `sum.bundle.js` и `shared.bundle.js` на 20 тысяц строк... , но в браузере запускается.
+
+_Внутри_ `index.bundle.js` _и_ `sum.bundle.js` _при использовании_ `lodash`, _функции ссылаются на_ `shared.budle.js`.
+
+### 6) Открытые вопросы:
+
+Почему в `shared.bundle.js` 20 тысяч строк?
